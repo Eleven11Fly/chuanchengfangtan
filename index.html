@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>“传承·建投人”——问题盲盒问答系统</title>
+<style>
+:root {
+  --brand-blue: #1E3A8A;
+  --brand-gold: #F59E0B;
+  --brand-gold-dark: #D97706;
+  --bg-dark: #0B1120;
+  --card-bg: #FFFFFF;
+  --text-main: #0F172A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+html, body {
+  width: 100%; height: 100vh; overflow: hidden;
+  background: radial-gradient(circle at top, #1E293B 0%, #0F172A 60%, #020617 100%);
+  color: #FFF;
+}
+
+body {
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 16px 14px;
+}
+
+.header { text-align: center; flex: 0 0 auto; margin-top: 4px; margin-bottom: 12px; }
+.header h1 { font-size: clamp(24px, 5.5vw, 32px); color: #F59E0B; font-weight: 800; letter-spacing: 1.5px; text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3); }
+.header p { font-size: 13.5px; color: #94A3B8; margin-top: 4px; font-weight: 500; }
+
+.card-container {
+  width: 100%; max-width: 480px; flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 24px; padding: 22px 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 158, 11, 0.3);
+  color: var(--text-main);
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.step-title { 
+  font-size: 19px; font-weight: 800; color: var(--brand-blue); 
+  text-align: center; margin-bottom: 14px; line-height: 1.4; 
+  border-bottom: 2px solid #F1F5F9; padding-bottom: 8px;
+}
+
+.form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.form-group { margin-bottom: 12px; flex: 1; }
+.form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #334155; }
+.form-control {
+  width: 100%; padding: 12px 14px; border: 1.5px solid #CBD5E1; border-radius: 12px;
+  font-size: 14px; outline: none; background: #F8FAFC; color: var(--text-main);
+  transition: all 0.2s;
+}
+.form-control:focus { border-color: var(--brand-blue); background: #FFF; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15); }
+
+.btn-action {
+  width: 100%;
+  background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
+  color: #FFF; border: 1px solid var(--brand-gold); padding: 15px; border-radius: 14px;
+  font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+  box-shadow: 0 8px 20px rgba(30, 58, 138, 0.3); transition: all 0.2s;
+}
+.btn-action:active { transform: scale(0.98); }
+
+.scroll-stage {
+  width: 100%; height: 230px; overflow: hidden; position: relative;
+  display: flex; align-items: center; border-radius: 18px;
+  background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
+  border: 1.5px solid #CBD5E1;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.scroll-track {
+  display: flex; gap: 16px; position: absolute; left: 0;
+  width: max-content; padding: 0 10px; will-change: transform;
+}
+
+.track-card {
+  width: 110px; height: 165px; border-radius: 22px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+.track-card .icon { font-size: 60px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); user-select: none; }
+
+.card-cat { background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%); }
+.card-dog { background: linear-gradient(135deg, #FFF1EB 0%, #ACE0F9 100%); }
+.card-fox { background: linear-gradient(135deg, #FFECD2 0%, #FCB69F 100%); }
+.card-panda { background: linear-gradient(135deg, #E0C3FC 0%, #8EC5FC 100%); }
+.card-rabbit { background: linear-gradient(135deg, #FEE140 0%, #FA709A 100%); }
+.card-lion { background: linear-gradient(135deg, #F6D365 0%, #FDA085 100%); }
+.card-dolphin { background: linear-gradient(135deg, #84FAB0 0%, #8FD3F4 100%); }
+.card-unicorn { background: linear-gradient(135deg, #A1C4FD 0%, #C2E9FB 100%); }
+
+.track-card.picked-anim {
+  transform: scale(1.3) translateY(-10px) !important;
+  border-color: #F59E0B !important;
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.8) !important;
+  z-index: 99 !important;
+}
+
+.card-stage { perspective: 1000px; height: 380px; width: 100%; flex: 1; }
+.card-3d { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.card-3d.flipped { transform: rotateY(180deg); }
+
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 22px; border: 2px solid var(--brand-gold); overflow: hidden; display: flex; flex-direction: column; }
+.card-front { background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%); color: #FFF; align-items: center; justify-content: center; cursor: pointer; }
+.card-back { background: #FFF; transform: rotateY(180deg); }
+
+.card-q-box { background: #FEF3C7; padding: 18px; border-bottom: 2px dashed var(--brand-gold); flex: 0 0 45%; display: flex; flex-direction: column; justify-content: center; }
+.card-a-box { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+
+.memorial-card { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1.5px solid var(--brand-gold); border-radius: 18px; padding: 20px; color: #FFF; }
+
+.hidden { display: none !important; }
+
+.admin-bar { width: 100%; max-width: 480px; font-size: 11px; text-align: center; margin-top: 8px; color: #94A3B8; }
+.admin-bar button { background: none; border: none; color: #F59E0B; font-size: 11px; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏛️ “传承·建投人”</h1>
+  <p>抽取问题盲盒 · 解锁建投故事</p>
+</div>
+
+<!-- 步骤 1: 提出问题与身份录入 -->
+<div class="card-container" id="step1">
+  <div class="step-title">第一步：录入信息并提问</div>
+  
+  <div class="form-row">
+    <div class="form-group">
+      <label>你的姓名</label>
+      <input type="text" id="userName" class="form-control" placeholder="例：张建投">
+    </div>
+    <div class="form-group">
+      <label>你的工号</label>
+      <input type="text" id="userEmpId" class="form-control" placeholder="例：8092">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>司龄身份（自动分流存入问题池）</label>
+    <select id="userSeniority" class="form-control" onchange="onSeniorityChange()">
+      <option value="new">🐣 萌新员工 (司龄 ≤ 3年)</option>
+      <option value="veteran">🦁 资深员工 (司龄 > 3年)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>写下你的问题或心得（放入专属池供后续抽取）：</label>
+    <textarea id="userQuestion" class="form-control" rows="3" style="line-height:1.5;" placeholder="例：刚入职被批评了怎么办？"></textarea>
+  </div>
+
+  <button class="btn-action" onclick="submitQuestionAndGoStep2()">放入问题池，准备抽卡 🎲</button>
+</div>
+
+<!-- 步骤 2: 无缝无限滚动传送带 -->
+<div class="card-container hidden" id="step2">
+  <div>
+    <div class="step-title">第二步：选择问答方向并抽卡</div>
+    <div class="form-group">
+      <label style="text-align: center;">请选择希望回答的对象问题：</label>
+      <select id="matchPreference" class="form-control" style="text-align-last: center; font-weight:700; color:var(--brand-blue);"></select>
+    </div>
+  </div>
+
+  <div class="scroll-stage" id="scrollStage">
+    <div class="scroll-track" id="scrollTrack">
+      <!-- 基础卡片阵列 -->
+      <div class="track-card card-cat" data-icon="🐱"><span class="icon">🐱</span></div>
+      <div class="track-card card-dog" data-icon="🐶"><span class="icon">🐶</span></div>
+      <div class="track-card card-fox" data-icon="🦊"><span class="icon">🦊</span></div>
+      <div class="track-card card-panda" data-icon="🐼"><span class="icon">🐼</span></div>
+      <div class="track-card card-rabbit" data-icon="🐰"><span class="icon">🐰</span></div>
+      <div class="track-card card-lion" data-icon="🦁"><span class="icon">🦁</span></div>
+      <div class="track-card card-dolphin" data-icon="🐬"><span class="icon">🐬</span></div>
+      <div class="track-card card-unicorn" data-icon="🦄"><span class="icon">🦄</span></div>
+    </div>
+  </div>
+
+  <button class="btn-action" id="pauseBtn" onclick="stopScrollAndPick()">🛑 点击暂停，抽取萌宠卡片</button>
+</div>
+
+<!-- 步骤 3: 3D 答题卡片 -->
+<div class="card-container hidden" id="step3">
+  <div class="card-stage">
+    <div class="card-3d" id="card3D" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div id="frontAnimalIcon" style="font-size:75px; margin-bottom:10px;">🐱</div>
+        <h3 style="color:#F59E0B; font-size:22px; font-weight:800;">建投萌宠盲盒</h3>
+        <p style="font-size:13px; opacity:0.8; margin-top:8px;">点击翻转卡片揭晓问题</p>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-q-box">
+          <span id="poolTag" style="font-size:12px; color:var(--brand-gold-dark); font-weight:bold; margin-bottom:4px;">✨ 问答卡片</span>
+          <p id="displayQuestion" style="font-size:15px; font-weight:bold; color:#1E293B; line-height:1.5;">“加载中...”</p>
+          <span id="displayAuthor" style="font-size:12px; color:#64748B; margin-top:6px;">提问者：--</span>
+        </div>
+        <div class="card-a-box">
+          <textarea id="answerInput" class="form-control" rows="3" style="line-height:1.5;" placeholder="写下你的真诚回答..." onclick="event.stopPropagation()"></textarea>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button id="returnBtn" style="flex:1; background:#F1F5F9; border:none; border-radius:12px; font-size:12px; color:#475569; font-weight:700; cursor:pointer;" onclick="returnToPool(event)">
+              ↩️ 换一张 (<span id="returnCount">3</span>/3)
+            </button>
+            <button class="btn-action" style="flex:2; padding:12px; font-size:15px;" onclick="submitAnswer(event)">提交回答 🏆</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 步骤 4: 纪念凭证卡片 -->
+<div class="card-container hidden" id="step4">
+  <div class="step-title">🎉 问答盲盒匹配成功！</div>
+  <p style="font-size:12.5px; text-align:center; color:#64748B; margin-bottom:12px;">数据已实时同步入后台管理系统！</p>
+
+  <div class="memorial-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:bold; color:#F59E0B; font-size:15px;">“传承·建投人”纪念卡</span>
+      <span id="cardCode" style="border:1px dashed #F59E0B; padding:3px 10px; border-radius:8px; font-size:12px; color:#F59E0B; font-weight:bold;">JTR-000000</span>
+    </div>
+
+    <div style="margin: 18px 0;">
+      <div id="summaryQ" style="font-size:14px; color:#F59E0B; margin-bottom:10px; line-height:1.5; font-weight:600;">问：...</div>
+      <div id="summaryA" style="font-size:13px; color:#E2E8F0; background:rgba(255,255,255,0.08); padding:12px; border-radius:10px; line-height:1.5;">答：...</div>
+    </div>
+
+    <div style="border-top: 1px dashed rgba(245,158,11,0.3); padding-top: 10px; font-size: 11px; color: #94A3B8; text-align:center;">
+      🎬 请凭此专属编号参与“建投微访谈”线下录制
+    </div>
+  </div>
+
+  <button class="btn-action" style="margin-top:14px;" onclick="location.reload()">再做一次问答</button>
+</div>
+
+<!-- 底部后台验证控制台 -->
+<div class="admin-bar">
+  <span>后台数据状态：<strong id="dataStatusText">正在连接后台...</strong></span> | 
+  <button onclick="toggleAdminPanel()">展开后台数据监控</button>
+</div>
+
+<div id="adminPanel" class="hidden" style="position:fixed; bottom:0; left:0; right:0; height:50vh; background:#FFF; color:#000; z-index:9999; padding:16px; overflow:auto; box-shadow:0 -10px 30px rgba(0,0,0,0.5);">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="color:#1E3A8A;">📊 后台数据实时汇总 (实时存留明细)</h3>
+    <button onclick="toggleAdminPanel()" style="padding:4px 12px; cursor:pointer;">关闭</button>
+  </div>
+  <div id="adminPanelContent" style="font-size:12px; font-family:monospace;">加载中...</div>
+</div>
+
+<script>
+let currentUser = { name: '', empId: '', seniority: '' };
+let currentPickedCard = null;
+let returnLeft = 3;
+let isFlipped = false;
+
+function onSeniorityChange() {
+  const seniority = document.getElementById('userSeniority').value;
+  const questionInput = document.getElementById('userQuestion');
+  if (seniority === 'new') {
+    questionInput.placeholder = "例：刚入职遇到业务不熟悉被批评了，该怎么调整心态？";
+  } else {
+    questionInput.placeholder = "例：在建投工作多年，最让你产生归属感的一瞬间是什么时候？";
+  }
+  updateMatchOptions();
+}
+
+function updateMatchOptions() {
+  const seniority = document.getElementById('userSeniority').value;
+  const matchSelect = document.getElementById('matchPreference');
+  matchSelect.innerHTML = '';
+  if (seniority === 'new') {
+    matchSelect.innerHTML = `
+      <option value="new_to_veteran">🐣 萌新 回答 🦁 资深员工的问题</option>
+      <option value="new_to_new">🐣 萌新 回答 🐣 萌新员工的问题</option>
+    `;
+  } else {
+    matchSelect.innerHTML = `
+      <option value="veteran_to_new">🦁 资深 回答 🐣 萌新员工的问题</option>
+      <option value="veteran_to_veteran">🦁 资深 回答 🦁 资深员工的问题</option>
+    `;
+  }
+}
+onSeniorityChange();
+
+// --- 传送带逻辑 ---
+let animTimer = null;
+let currentPos = 0;
+let isRunning = false;
+let singleGroupWidth = 0;
+
+function setupInfiniteTrack() {
+  const track = document.getElementById('scrollTrack');
+  const originalCards = track.innerHTML;
+  track.innerHTML = originalCards + originalCards;
+  setTimeout(() => {
+    const cards = track.querySelectorAll('.track-card');
+    if (cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 16;
+      singleGroupWidth = (cards.length / 2) * (cardWidth + gap);
+    }
+  }, 100);
+}
+setupInfiniteTrack();
+
+function startTrack() {
+  if (isRunning) return;
+  isRunning = true;
+  const track = document.getElementById('scrollTrack');
+  if (animTimer) clearInterval(animTimer);
+  animTimer = setInterval(() => {
+    currentPos -= 2.5;
+    if (singleGroupWidth > 0 && Math.abs(currentPos) >= singleGroupWidth) {
+      currentPos = 0;
+    }
+    track.style.transform = `translateX(${currentPos}px)`;
+  }, 16);
+}
+
+// 步骤1：提交问题
+async function submitQuestionAndGoStep2() {
+  const name = document.getElementById('userName').value.trim();
+  const empId = document.getElementById('userEmpId').value.trim();
+  const seniority = document.getElementById('userSeniority').value;
+  const question = document.getElementById('userQuestion').value.trim();
+
+  if (!name || !empId || !question) {
+    alert('请完整填写姓名、工号与你的问题！');
+    return;
+  }
+
+  currentUser = { name, empId, seniority };
+
+  const animals = ['🐱','🐶','🦊','🐼','🐰','🦁','🐬','🦄'];
+  const randomIcon = animals[Math.floor(Math.random() * animals.length)];
+
+  try {
+    const res = await fetch('/api/card/add-question', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        authorName: name, 
+        authorEmpId: empId,
+        seniority: seniority, 
+        question: question,
+        animalIcon: randomIcon
+      })
+    });
+    if (res.ok) {
+      await refreshDataStatus();
+    } else {
+      console.error('提交问题失败，状态码:', res.status);
+    }
+  } catch (e) {
+    console.error("提交问题出错：", e);
+  }
+
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  startTrack();
+}
+
+// 步骤2：停止滚动并抽卡
+async function stopScrollAndPick() {
+  if (!isRunning) return;
+  clearInterval(animTimer);
+  isRunning = false;
+
+  const cards = document.querySelectorAll('.track-card');
+  const stage = document.getElementById('scrollStage');
+  const stageCenter = stage.getBoundingClientRect().left + stage.clientWidth / 2;
+
+  let pickedElem = cards[0];
+  let minDiff = Infinity;
+  cards.forEach(card => {
+    const rect = card.getBoundingClientRect();
+    const cardCenter = rect.left + rect.width / 2;
+    const diff = Math.abs(cardCenter - stageCenter);
+    if (diff < minDiff) {
+      minDiff = diff;
+      pickedElem = card;
+    }
+  });
+
+  pickedElem.classList.add('picked-anim');
+
+  const matchPref = document.getElementById('matchPreference').value;
+  const targetSeniority = matchPref.endsWith('veteran') ? 'veteran' : 'new';
+
+  let cardData = null;
+  try {
+    const res = await fetch(`/api/card/get-random-card?targetSeniority=${targetSeniority}&currentEmpId=${encodeURIComponent(currentUser.empId)}`);
+    const data = await res.json();
+    if (data.success && data.card) {
+      cardData = data.card;
+    }
+  } catch (e) {
+    console.error("Fetch 卡片失败：", e);
+  }
+
+  if (!cardData) {
+    cardData = {
+      id: 1,
+      authorName: "建投前辈",
+      question: targetSeniority === 'veteran' ? "在你职业生涯中，做出最艰难的选择是什么？" : "刚入职遇到业务不熟悉被批评了，该怎么调整心态？",
+      seniority: targetSeniority,
+      animalIcon: pickedElem.getAttribute('data-icon') || '🐱'
+    };
+  }
+
+  currentPickedCard = cardData;
+
+  setTimeout(() => {
+    const displayIcon = currentPickedCard.animalIcon || pickedElem.getAttribute('data-icon') || '🐱';
+    document.getElementById('frontAnimalIcon').textContent = displayIcon;
+    document.getElementById('displayQuestion').textContent = "“" + currentPickedCard.question + "”";
+    document.getElementById('displayAuthor').textContent = "提问人：" + (currentPickedCard.authorName || '建投同仁');
+    document.getElementById('poolTag').textContent = currentPickedCard.seniority === 'new' ? '✨ 来自【萌新员工问题池】' : '✨ 来自【资深员工问题池】';
+
+    pickedElem.classList.remove('picked-anim');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.remove('hidden');
+  }, 600);
+}
+
+function flipCard() {
+  if (!isFlipped) {
+    document.getElementById('card3D').classList.add('flipped');
+    isFlipped = true;
+  }
+}
+
+function returnToPool(event) {
+  event.stopPropagation();
+  if (returnLeft <= 0) {
+    alert('放回池子的机会已用完（上限 3 次）！');
+    return;
+  }
+  returnLeft--;
+  document.getElementById('returnCount').textContent = returnLeft;
+  document.getElementById('card3D').classList.remove('flipped');
+  isFlipped = false;
+  document.getElementById('answerInput').value = '';
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  startTrack();
+}
+
+// 步骤3：提交回答
+async function submitAnswer(event) {
+  event.stopPropagation();
+  const answer = document.getElementById('answerInput').value.trim();
+  if (!answer) {
+    alert('请填写你的回答！');
+    return;
+  }
+
+  let code = "JTR-000000";
+  try {
+    const res = await fetch('/api/card/submit-answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        questionId: currentPickedCard.id, 
+        answererName: currentUser.name, 
+        answererEmpId: currentUser.empId,
+        answer: answer 
+      })
+    });
+    const result = await res.json();
+    if (result.code) code = result.code;
+    await refreshDataStatus();
+  } catch(e) {
+    console.error("提交回答失败：", e);
+  }
+
+  document.getElementById('summaryQ').textContent = "问：" + currentPickedCard.question;
+  document.getElementById('summaryA').textContent = "答：" + answer;
+  document.getElementById('cardCode').textContent = code;
+
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step4').classList.remove('hidden');
+}
+
+// 刷新数据状态（底部面板）
+async function refreshDataStatus() {
+  try {
+    const res = await fetch('/api/card/admin-data');
+    const data = await res.json();
+    document.getElementById('dataStatusText').textContent = `匹配记录: ${data.totalMatches} 条 | 萌新题库: ${data.totalNewbieQuestions} | 资深题库: ${data.totalVeteranQuestions}`;
+    
+    let html = `<p><strong>【当前萌新题库数量】：</strong>${data.totalNewbieQuestions} | <strong>【资深题库数量】：</strong>${data.totalVeteranQuestions}</p>`;
+    html += `<h4 style="margin-top:10px; color:#1E3A8A;">全量匹配回答留痕记录 (${data.totalMatches})：</h4>`;
+    html += `<table border="1" width="100%" cellpadding="6" style="border-collapse:collapse; font-size:11px;">
+      <tr style="background:#F1F5F9;"><th>序号</th><th>提问人(工号)</th><th>提问内容</th><th>回答人(工号)</th><th>回答内容</th><th>凭证码</th></tr>`;
+    data.records.forEach((r, idx) => {
+      html += `<tr>
+        <td>${idx+1}</td>
+        <td>${r.askName}(${r.askEmpId})</td>
+        <td>${r.question}</td>
+        <td>${r.answerName}(${r.answerEmpId})</td>
+        <td>${r.answer}</td>
+        <td>${r.ticketCode}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('adminPanelContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('dataStatusText').textContent = "等待数据写入...";
+  }
+}
+refreshDataStatus();
+
+function toggleAdminPanel() {
+  document.getElementById('adminPanel').classList.toggle('hidden');
+}
+</script>
+</body>
+</html>
